@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -31,10 +32,18 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Saludo(texto: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hola $texto!",
-        modifier = modifier
-    )
+    Column {
+        Text(
+            text = "Hola $texto!",
+            modifier = modifier
+        )
+
+        Text(
+            text = "Hola $texto!",
+            modifier = modifier
+        )
+
+    }
 }
 
 @Preview(showBackground = true)
