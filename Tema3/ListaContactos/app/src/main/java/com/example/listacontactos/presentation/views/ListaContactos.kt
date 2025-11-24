@@ -49,7 +49,9 @@ fun Nav() {
     ) {
 
         composable("lista") { ContactsScreen(
-            Modifier.fillMaxSize().padding(24.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(24.dp),
             navController
         )
         }
@@ -181,7 +183,9 @@ fun Formulario(navController: NavController) {
 
     Column (
 
-        modifier = Modifier.fillMaxSize().padding(30.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(30.dp)
 
     )
     {
