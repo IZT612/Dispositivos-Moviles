@@ -13,14 +13,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,6 +36,10 @@ import com.example.listacontactos.R
 import com.example.listacontactos.data.repositories.ContactosRepository
 import com.example.listacontactos.domain.entities.Contacto
 import com.example.listacontactos.domain.entities.Genero
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import com.example.listacontactos.MainActivity
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -48,15 +52,17 @@ fun Nav() {
         startDestination = "lista"
     ) {
 
-        composable("lista") { ContactsScreen(
-            Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            navController
-        )
+        composable("lista") {
+            ContactsScreen(
+                Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                navController
+            )
         }
 
-        composable("añadir") { Formulario(navController)
+        composable("añadir") {
+            Formulario(navController)
         }
 
     }
@@ -145,8 +151,14 @@ fun ContactRow(contacto: Contacto) {
 
 @Composable
 fun ContactsScreen(modifier: Modifier, navController: NavController) {
-    val lista = ContactosRepository.getAllContacts()
+    val lista = remember { mutableStateListOf<Contacto>() }
+    val coroutineScope = rememberCoroutineScope()
 
+    LaunchedEffect(Unit) {
+        val contactosDB = MainActivity.database.contactosDao().getAllContactos()
+        lista.clear()
+        lista.addAll(contactosDB)
+    }
 
 
     Scaffold(modifier = modifier) { innerPadding ->
@@ -179,6 +191,8 @@ fun Formulario(navController: NavController) {
     val options = listOf("Masculino", "Femenino")
     var selectedOption by remember { mutableStateOf(options[0]) }
     var genero: Genero
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
 
     Column (
@@ -234,11 +248,13 @@ fun Formulario(navController: NavController) {
 
                 }
 
-                val nuevoContacto: Contacto = Contacto(nuevaId, textNombre, textTelefono, genero)
+                coroutineScope.launch {
+                    val nuevoContacto = Contacto(nuevaId, textNombre, textTelefono, genero)
+                    MainActivity.database.contactosDao().addContacto(nuevoContacto)
+                    navController.navigate("lista")
+                }
 
-                ContactosRepository.guardarContacto(nuevoContacto)
 
-                navController.navigate("lista")
 
             }
 
@@ -251,5 +267,3 @@ fun Formulario(navController: NavController) {
     }
 
 }
-
-
