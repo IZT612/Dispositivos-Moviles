@@ -1,11 +1,21 @@
 package com.example.ejercicionavidad.ui.viewmodels
 
+import android.app.Application
 import androidx.compose.runtime.*
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.ejercicionavidad.data.models.Move
 import com.example.ejercicionavidad.data.models.RoundResult
+import com.example.ejercicionavidad.data.room.database.AppDatabase
+import com.example.ejercicionavidad.data.room.entities.GameEntity
+import kotlinx.coroutines.launch
 
-class GameViewModel : ViewModel() {
+class GameViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val gameDao = AppDatabase.getDatabase(application).gameDao()
+
+    var showEndDialog by mutableStateOf(false)
+        private set
 
     var playerName by mutableStateOf("")
         private set
@@ -14,6 +24,13 @@ class GameViewModel : ViewModel() {
         private set
 
     var gameFinished by mutableStateOf(false)
+        private set
+
+    // 👉 NUEVO: jugadas actuales
+    var playerMove by mutableStateOf<Move?>(null)
+        private set
+
+    var iaMove by mutableStateOf<Move?>(null)
         private set
 
     private val totalRounds = 3
@@ -26,12 +43,15 @@ class GameViewModel : ViewModel() {
         resetGame()
     }
 
-    fun playRound(playerMove: Move) {
+    fun playRound(move: Move) {
         val finalPlayerMove =
-            if (playerMove == Move.RANDOM) randomMove() else playerMove
+            if (move == Move.RANDOM) randomMove() else move
 
-        val iaMove = randomMove()
-        val result = calculateResult(finalPlayerMove, iaMove)
+        val finalIaMove = randomMove()
+        val result = calculateResult(finalPlayerMove, finalIaMove)
+
+        playerMove = finalPlayerMove
+        iaMove = finalIaMove
 
         roundsPlayed++
 
@@ -41,14 +61,31 @@ class GameViewModel : ViewModel() {
             else -> {}
         }
 
-        resultText = """
-            Tú: $finalPlayerMove
-            IA: $iaMove
-            Resultado: $result
-        """.trimIndent()
+        resultText = when (result) {
+            RoundResult.WIN -> "¡Has ganado la ronda!"
+            RoundResult.LOSE -> "Has perdido la ronda"
+            RoundResult.DRAW -> "Empate"
+        }
 
         if (roundsPlayed == totalRounds) {
             gameFinished = true
+            showEndDialog = true
+            saveGame()
+        }
+    }
+
+    private fun saveGame() {
+        val winner = getWinner()
+
+        viewModelScope.launch {
+            gameDao.insertGame(
+                GameEntity(
+                    playerName = playerName,
+                    playerWins = playerWins,
+                    iaWins = iaWins,
+                    winner = winner
+                )
+            )
         }
     }
 
@@ -64,6 +101,9 @@ class GameViewModel : ViewModel() {
         playerWins = 0
         iaWins = 0
         gameFinished = false
+        showEndDialog = false
+        playerMove = null
+        iaMove = null
         resultText = "Elige una opción"
     }
 

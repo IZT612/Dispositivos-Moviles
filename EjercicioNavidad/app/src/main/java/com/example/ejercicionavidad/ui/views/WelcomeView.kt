@@ -7,7 +7,10 @@ import androidx.compose.ui.*
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun WelcomeView(onStart: (String) -> Unit) {
+fun WelcomeView(
+    onStart: (String) -> Unit,
+    onHistoryClick: () -> Unit
+) {
     var name by remember { mutableStateOf("") }
 
     Column(
@@ -31,6 +34,12 @@ fun WelcomeView(onStart: (String) -> Unit) {
 
         Button(onClick = { if (name.isNotBlank()) onStart(name) }) {
             Text("Empezar")
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        OutlinedButton(onClick = onHistoryClick) {
+            Text("Ver historial de partidas")
         }
     }
 }
